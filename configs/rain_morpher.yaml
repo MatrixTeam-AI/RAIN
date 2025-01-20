@@ -1,0 +1,78 @@
+batch_size: 1
+height: 512
+width: 512
+reference_image_height: 512
+reference_image_width: 512
+temporal_adaptive_step: 4
+temporal_window_size: 4
+num_inference_steps: 4
+dtype: "fp16"
+threshold: 0.7
+guidance_scale: 2.5
+tensorrt: False
+onnx_tensorrt: False
+onnx_opset: 17
+fps: 16
+landmark_detector: "dwpose" 
+#pfld_detection_model_path: "./weights/onnx/version-RFB-320.onnx"
+#pfld_landmark_model_path: "./weights/onnx/pfld.onnx"
+
+
+
+
+dwpose_detection_model_path: "./weights/onnx/yolox_s.onnx"
+dwpose_landmark_model_path: "./weights/onnx/dw-mm_ucoco.onnx"
+
+vae_model_path: "./weights/sd-vae-ft-mse"
+image_encoder_path: "./weights/image_encoder"
+
+reference_unet_weight_path: "./weights/torch/reference_unet.pth"
+denoising_unet_weight_path: "./weights/torch/motion_unet.pth"
+pose_guider_weight_path: "./weights/torch/pose_guider.pth"
+taesdv_weight_path: "./weights/torch/taesdv.pth"
+
+
+
+
+unet_config_path: "./configs/unet.json"
+tensorrt_target_model: "./weights/tensorrt/unet_work.engine"
+seed: 42
+onnx_path: "./weights/onnx/unet_work/unet_work.onnx"
+onnx_opt_path: "./weights/onnx/unet_work_opt/unet_work_opt.onnx"
+vae_encoder_onnx_path: "./weights/onnx/vae_encoder.onnx"
+clip_onnx_path: "./weights/onnx/clip_model.onnx"
+reference_net_onnx_path: "./weights/onnx/reference_unet.onnx"
+unet_additional_kwargs:
+  use_inflated_groupnorm: true
+  unet_use_cross_frame_attention: false 
+  unet_use_temporal_attention: false
+  use_motion_module: true
+  motion_module_resolutions:
+  - 1
+  - 2
+  - 4
+  - 8
+  motion_module_mid_block: true 
+  motion_module_decoder_only: false
+  motion_module_type: Vanilla
+  motion_module_kwargs:
+    num_attention_heads: 8
+    num_transformer_block: 1
+    attention_block_types:
+    - Temporal_Self
+    - Temporal_Self
+    temporal_position_encoding: true
+    temporal_position_encoding_max_len: 32
+    temporal_attention_dim_div: 1
+  cond_proj_dim: 512
+
+noise_scheduler_kwargs:
+  num_train_timesteps:    1000
+  beta_start:             0.00085
+  beta_end:               0.012
+  beta_schedule:          "scaled_linear"
+  steps_offset:           1
+  clip_sample:            False
+  rescale_betas_zero_snr: True
+  timestep_spacing:       "trailing"
+  prediction_type:        "v_prediction"

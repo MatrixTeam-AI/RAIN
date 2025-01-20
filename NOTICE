@@ -1,0 +1,20 @@
+==============================================================
+This repo also contains various third-party components and some code modified from other repos under other open source licenses. The following sections contain licensing infromation for such third-party libraries.
+
+-----------------------------
+animatediff
+Apache License, Version 2.0
+
+-----------------------------
+Dwpose
+Apache License, Version 2.0
+
+-----------------------------
+Moore-AnimateAnyone
+Apache License, Version 2.0
+Copyright @2023-2024 Moore Threads Technology Co., Ltd("Moore Threads").
+
+-----------------------------
+taesdv
+MIT License
+Copyright (c) 2024 Ollin Boer Bohan
