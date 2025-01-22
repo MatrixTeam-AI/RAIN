@@ -3,6 +3,8 @@ import torch
 from src.morpher import RAINMorpher
 import cv2
 from src.modeling.translation import translation
+from gradio_webrtc import WebRTC
+
 a = RAINMorpher("./configs/rain_morpher.yaml", torch.device("cuda:0"),)
 
 import gradio as gr
@@ -12,7 +14,6 @@ from collections import deque
 import time
 import os
 
-webrtc_mode = True # Set to True requires gradio-webrtc==0.0.20
 
 res = np.zeros((512, 512, 3) , dtype=np.uint8)
 timestamp = -1.0
@@ -37,6 +38,30 @@ nose_horizontal_correction=0.1,
 nose_vertical_correction=0.05,
 )
 
+def transform_func2(frame):
+    global count
+    img_color = cv2.pyrDown(cv2.pyrDown(frame))
+    for _ in range(6):
+        img_color = cv2.bilateralFilter(img_color, 9, 9, 7)
+    img_color = cv2.pyrUp(cv2.pyrUp(img_color))
+    height, width, channels = frame.shape
+    print(f"Image size: {width}x{height}")
+
+    # prepare edges
+    img_edges = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    img_edges = cv2.adaptiveThreshold(
+        cv2.medianBlur(img_edges, 7),
+        255,
+        cv2.ADAPTIVE_THRESH_MEAN_C,
+        cv2.THRESH_BINARY,
+        9,
+        2,
+    )
+    img_edges = cv2.cvtColor(img_edges, cv2.COLOR_GRAY2RGB)
+    # combine color and edges
+    img = cv2.bitwise_and(img_color, img_edges)
+    return img_edges
+
 def transform_func(frame):
     global timestamp
     global res
@@ -48,15 +73,14 @@ def transform_func(frame):
     mw = (w - d) // 2
 
     frame = frame[mh:h-mh,mw:w-mw,:]
-    if(webrtc_mode):
-        frame = frame[:,:,::-1]
     a.push_input(frame) 
     current_timestamp = time.time()
     if(current_timestamp - timestamp >= 1.0 / (a.fps + len(a.output_pile) * 2 )):
         u = a.fetch_one_frame()
         if not (u is None):
             res = u
-            if (webrtc_mode):
+            # print("width: ", res.shape[1], "height: ", res.shape[0], "original width: ", w, "original height: ", h)
+            if (res.dtype == np.float16):
                 res = (255.0 * res).astype(np.uint8)
                 res = cv2.cvtColor(res, cv2.COLOR_RGB2BGR)
             timestamp = current_timestamp
@@ -227,7 +251,7 @@ def param2translations(face_length_ratio=0.75, eye_height_ratio=3.0, eye_width_r
     ])
     return translations
 
-css_="""
+css_=""".my-column {max-width: 600px !important; max-height: 600px !important;}
 """
 with gr.Blocks(css=css_) as demo:
     gr.HTML("<h2>Reference Image</h2><br/><p>Upload the reference image first (or choose from examples), you can safely unload reference module after fusing for saving device memory. We recommend images with clear background, half-portraits and anime characters.</p>")
@@ -257,33 +281,18 @@ with gr.Blocks(css=css_) as demo:
     )
     gr.HTML("<h2>Face Morphing</h2><br/><p>Start webcam and click on 'start' for morphing, click on stop for stoping. The input will be centerly cropped according to cropping ratio. You can change the reference image while morphing if device memory is enough, or you will have to stop and reload reference module, fuse reference, unload reference module and then restart. There will be delay in reaction.</p>")
     with gr.Row():
-        if webrtc_mode:
-            from gradio_webrtc import WebRTC
-            with gr.Column(elem_classes=["my-column"]):
-                track_constraints = {"width": {"max": 1920}, "height": {"max": 1080}, "resizeMode": "none"}
-                rtp_params = {"degradationPreference": "maintain-resolution", "priority": "high"}
-                image = WebRTC(label="Stream", mode="send-receive", modality="video", track_constraints=track_constraints, rtp_params=rtp_params)
-            with gr.Column():
-                btn5 = gr.Button("Start")
-                btn6 = gr.Button("Stop")
+        with gr.Column(elem_classes=["my-column"]):
+            track_constraints = {"width": {"max": 1920}, "height": {"max": 1080}, "resizeMode": "none"}
+            rtp_params = {"degradationPreference": "maintain-resolution", "priority": "high"}
+            image = WebRTC(label="Stream", mode="send-receive", modality="video", track_constraints=track_constraints, rtp_params=rtp_params)
+        with gr.Column():
+            btn5 = gr.Button("Start")
+            btn6 = gr.Button("Stop")
             image.stream(
                 fn=transform_func,
                 inputs=[image], # 
                 outputs=[image], time_limit=1000, concurrency_limit = 30
             )
-            btn5.click(fn=start_process)
-            btn6.click(fn=stop_process)
-        else:
-            with gr.Column():
-                input_img = gr.Image(sources=["webcam"], type="numpy", streaming=True)
-                btn5 = gr.Button("Start")
-            with gr.Column():
-                output_img = gr.Image( type="numpy", streaming=True)
-                btn6 = gr.Button("Stop")
-            input_img.stream(transform_func, [input_img], [output_img], time_limit=30, stream_every=1.0 / (2 * a.fps), concurrency_limit=30)
-            btn5.click(fn=start_process)
-            btn6.click(fn=stop_process)
-
     gr.HTML("<h2>Face Calibration</h2><br/><p>Take on a photo of yourself and then calibrate the params for facical landmarks morphing. You can try this until you feel good enough. </p>")
     with gr.Row():
         with gr.Column():
@@ -320,6 +329,8 @@ with gr.Blocks(css=css_) as demo:
         inp14.change(set_params("nose_horizontal_correction"),[inp14, input_img_pose], [im_output_pose])
         inp15.change(set_params("nose_vertical_correction"),[inp15, input_img_pose], [im_output_pose])
         
+    btn5.click(fn=start_process)
+    btn6.click(fn=stop_process)
     gr.HTML("<h2>Offline Rendering</h2><br/><p>Upload a video and get generated video in an offline rendering manner (Recommend for non-TensorRT mode).</p>")
     with gr.Row():
         with gr.Column():

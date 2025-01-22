@@ -359,7 +359,7 @@ class RAINMorpher:
                 translation(60, 68, xaxis=(0,4), relative_length=(33, 3), horizontal_transition=-0.15),
                 translation(4, 13, xaxis=(0,8), horizontal_scale=0.9),
             ])
-            self.face_tracker = DWposeDetector(cfg.dwpose_detection_model_path, cfg.dwpose_landmark_model_path, providers, face_only=True, translations=translations, detection_size=(512, 512))
+            self.face_tracker = DWposeDetector(cfg.dwpose_detection_model_path, cfg.dwpose_landmark_model_path, ([('TensorrtExecutionProvider', {'device_id': device_id,})] + providers ) if cfg.dwpose_tensorrt else providers, face_only=True, translations=translations, detection_size=(512, 512))
             self.face_tracker.set_patterns(patterns)
         else:
             raise NotImplementedError
@@ -737,10 +737,10 @@ class RAINMorpher:
                 else:
                     mh = hs
                     mw = int(hs * wt / ht)
-                dw = max((ws - mw) // 2, 1)
-                dh = max((hs - mh) // 2, 1)
+                dw = (ws - mw) // 2
+                dh = (hs - mh) // 2
 
-                input = np.array(Image.fromarray(input[dh:-dh,dw:-dw]).resize((size[1], size[0])))
+                input = np.array(Image.fromarray(input[dh:hs-dh,dw:ws-dw]).resize((size[1], size[0])))
             else:
                 input = np.array(Image.fromarray(input).resize((size[1], size[0])))
 
