@@ -2,11 +2,11 @@
 This repository contains source code for [	
 RAIN: Real-time Animation Of Infinite Video Stream](https://arxiv.org/abs/2412.19489). A real-time implementation for video generataion on customer-level devices.
 
-Project Page is [here](https://pscgylotti.github.io/pages/RAIN).
+Project Page is [here](https://matrixteam-ai.github.io/pages/RAIN).
 
 # Update Plan
 - [x] Release Demo code
-- [ ] Release inference pipeline code
+- [x] Release inference pipeline code
 - [ ] Release source code for training
 - [ ] Update for a more interactive implementation
 
@@ -46,7 +46,5 @@ Upload an upper-half-body potrait of any anime characters, fuse reference and tu
 It generally takes about `12 GiB` of Device RAM to run the whole inference demo. However, you can unload the reference part after fusing the reference image. Then the synthesis-only model requires about `8 GiB` of Device RAM to run.
 
 # Acknowledgment
-
-Our work is based on [AnimateAnyone](https://github.com/MooreThreads/Moore-AnimateAnyone/blob/master), [Moore-AnimateAnyone](https://github.com/MooreThreads/Moore-AnimateAnyone), [Open-AnimateAnyone](https://github.com/guoqincode/Open-AnimateAnyone), [AnimateDiff](https://github.com/guoyww/AnimateDiff), [DWPose](https://github.com/IDEA-Research/DWPose), [TinyAutoencoder](https://github.com/madebyollin/taesdv), [AnimeFaceDetector](https://github.com/hysts/anime-face-detector). Thanks to these teams/authors for their work.
 
 Special thanks to [CivitAI Community](https://civit.ai) and [YODOYA](https://www.pixiv.net/users/101922785) for example images. Thanks to [Jianwen Meng](mailto:jwmeng@mail.ustc.edu.cn) for pipeline design.
