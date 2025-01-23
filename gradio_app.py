@@ -12,7 +12,7 @@ from collections import deque
 import time
 import os
 
-webrtc_mode = True # Set to True requires gradio-webrtc==0.0.20
+webrtc_mode = False # Set to True requires gradio-webrtc==0.0.20
 
 res = np.zeros((512, 512, 3) , dtype=np.uint8)
 timestamp = -1.0
